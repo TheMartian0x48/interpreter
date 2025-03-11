@@ -1,5 +1,28 @@
 const std = @import("std");
 
+var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+const allocator = gpa.allocator();
+var keywords: ?std.StringHashMap(Tag) = null;
+
+pub fn init() void {
+    if (keywords == null) {
+        keywords = std.StringHashMap(Tag).init(allocator);
+
+        keywords.?.put("fn", Tag.function) catch {};
+        keywords.?.put("let", Tag.let) catch {};
+    }
+}
+
+pub fn deinit() void {
+    if (keywords != null) {
+        keywords.?.deinit();
+    }
+}
+
+pub fn lookupKeyword(keyword: []const u8) Tag {
+    return keywords.?.get(keyword) orelse Tag.ident;
+}
+
 pub const Tag = enum {
     illegal,
     eof,
@@ -13,6 +36,8 @@ pub const Tag = enum {
     rparen,
     lbrace,
     rbrace,
+    function,
+    let,
 
     pub fn lexeme(tag: Tag) ?[]const u8 {
         return switch (tag) {
@@ -28,6 +53,8 @@ pub const Tag = enum {
             .rparen => ")",
             .lbrace => "{",
             .rbrace => "}",
+            .function => "fn",
+            .let => "let",
         };
     }
 };
