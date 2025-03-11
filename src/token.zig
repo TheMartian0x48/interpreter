@@ -10,6 +10,11 @@ pub fn init() void {
 
         keywords.?.put("fn", Tag.function) catch {};
         keywords.?.put("let", Tag.let) catch {};
+        keywords.?.put("true", Tag.trueT) catch {};
+        keywords.?.put("false", Tag.falseT) catch {};
+        keywords.?.put("if", Tag.ifT) catch {};
+        keywords.?.put("else", Tag.elseT) catch {};
+        keywords.?.put("return", Tag.returnT) catch {};
     }
 }
 
@@ -27,17 +32,37 @@ pub const Tag = enum {
     illegal,
     eof,
     ident,
-    int,
     assign,
+
+    int,
     plus,
-    comma,
-    semicolon,
+    minus,
+
     lparen,
     rparen,
     lbrace,
     rbrace,
+
     function,
     let,
+    bang,
+    asterisk,
+    slash,
+    comma,
+    semicolon,
+
+    gt,
+    lt,
+
+    trueT,
+    falseT,
+
+    ifT,
+    elseT,
+    returnT,
+
+    eq,
+    not_eq,
 
     pub fn lexeme(tag: Tag) ?[]const u8 {
         return switch (tag) {
@@ -55,6 +80,19 @@ pub const Tag = enum {
             .rbrace => "}",
             .function => "fn",
             .let => "let",
+            .gt => ">",
+            .lt => "<",
+            .minus => "-",
+            .bang => "!",
+            .asterisk => "*",
+            .slash => "/",
+            .trueT => "true",
+            .falseT => "false",
+            .ifT => "if",
+            .elseT => "else",
+            .returnT => "return",
+            .eq => "==",
+            .not_eq => "!=",
         };
     }
 };
