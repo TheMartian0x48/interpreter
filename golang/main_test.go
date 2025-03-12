@@ -175,3 +175,36 @@ func TestNextTokenFour(t *testing.T) {
 		}
 	}
 }
+
+func TestNextTokenFive(t *testing.T) {
+	input := `
+        10 == 10;
+        9 != 10;
+    `
+	tests := []struct {
+		expectedType    TokenType
+		expectedLiteral string
+	}{
+		{INT, "10"},
+		{EQ, "=="},
+		{INT, "10"},
+		{SEMICOLON, ";"},
+		{INT, "9"},
+		{NOT_EQ, "!="},
+		{INT, "10"},
+		{SEMICOLON, ";"},
+		{EOF, ""},
+	}
+	l := NewLexer(input)
+	for i, tt := range tests {
+		tok := l.NextToken()
+		if tok.Type != tt.expectedType {
+			t.Fatalf("tests[%d] - ype wrong. expected=%q, got=%q",
+				i, tt.expectedType, tok.Type)
+		}
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("tests[%d] - literal wrong. expected=%q, got=%q",
+				i, tt.expectedLiteral, tok.Literal)
+		}
+	}
+}

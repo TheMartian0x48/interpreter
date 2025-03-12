@@ -16,8 +16,10 @@ const (
 	ASTRISK = "*"
 	SLASH   = "/"
 
-	LT = "<"
-	GT = ">"
+	LT     = "<"
+	GT     = ">"
+	EQ     = "=="
+	NOT_EQ = "!="
 
 	COMMA     = ","
 	SEMICOLON = ";"
@@ -76,6 +78,13 @@ func NewLexer(input string) *Lexer {
 	l.readChar()
 	return l
 }
+func (l *Lexer) peekChar() byte {
+	if l.readPosition >= len(l.input) {
+		return 0
+	} else {
+		return l.input[l.readPosition]
+	}
+}
 
 func (l *Lexer) readChar() {
 	if l.readPosition >= len(l.input) {
@@ -133,7 +142,12 @@ func (l *Lexer) NextToken() Token {
 	case ';':
 		tok = NewToken(SEMICOLON, l.ch)
 	case '=':
-		tok = NewToken(ASSIGN, l.ch)
+		if l.peekChar() == '=' {
+			l.readChar()
+			tok = Token{Type: EQ, Literal: "=="}
+		} else {
+			tok = NewToken(ASSIGN, l.ch)
+		}
 	case '{':
 		tok = NewToken(LBRACE, l.ch)
 	case '}':
@@ -141,7 +155,12 @@ func (l *Lexer) NextToken() Token {
 	case '*':
 		tok = NewToken(ASTRISK, l.ch)
 	case '!':
-		tok = NewToken(BANG, l.ch)
+		if l.peekChar() == '=' {
+			l.readChar()
+			tok = Token{Type: NOT_EQ, Literal: "!="}
+		} else {
+			tok = NewToken(BANG, l.ch)
+		}
 	case '/':
 		tok = NewToken(SLASH, l.ch)
 	case '<':
