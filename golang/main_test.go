@@ -1,210 +1,149 @@
 package main
 
 import (
+	"interpreter/token"
 	"testing"
 )
 
-func TestNextToken(t *testing.T) {
-	input := `=+(){},;`
-	tests := []struct {
-		expectedType    TokenType
-		expectedLiteral string
-	}{
-		{ASSIGN, "="},
-		{PLUS, "+"},
-		{LPAREN, "("},
-		{RPAREN, ")"},
-		{LBRACE, "{"},
-		{RBRACE, "}"},
-		{COMMA, ","},
-		{SEMICOLON, ";"},
-		{EOF, ""},
-	}
-	l := NewLexer(input)
-	for i, tt := range tests {
-		tok := l.NextToken()
-		if tok.Type != tt.expectedType {
-			t.Fatalf("tests[%d] - ype wrong. expected=%q, got=%q",
-				i, tt.expectedType, tok.Type)
-		}
-		if tok.Literal != tt.expectedLiteral {
-			t.Fatalf("tests[%d] - literal wrong. expected=%q, got=%q",
-				i, tt.expectedLiteral, tok.Literal)
-		}
-	}
-}
-func TestNextTokenTwo(t *testing.T) {
-	input := `let five = 5;
-            let ten = 10;
-            let add = fn(x, y) {
-                x + y;
-            };
-            let result = add(five, ten);
-`
-	tests := []struct {
-		expectedType    TokenType
-		expectedLiteral string
-	}{
-		{LET, "let"},
-		{IDENT, "five"},
-		{ASSIGN, "="},
-		{INT, "5"},
-		{SEMICOLON, ";"},
-		{LET, "let"},
-		{IDENT, "ten"},
-		{ASSIGN, "="},
-		{INT, "10"},
-		{SEMICOLON, ";"},
-		{LET, "let"},
-		{IDENT, "add"},
-		{ASSIGN, "="},
-		{FUNCTION, "fn"},
-		{LPAREN, "("},
-		{IDENT, "x"},
-		{COMMA, ","},
-		{IDENT, "y"},
-		{RPAREN, ")"},
-		{LBRACE, "{"},
-		{IDENT, "x"},
-		{PLUS, "+"},
-		{IDENT, "y"},
-		{SEMICOLON, ";"},
-		{RBRACE, "}"},
-		{SEMICOLON, ";"},
-		{LET, "let"},
-		{IDENT, "result"},
-		{ASSIGN, "="},
-		{IDENT, "add"},
-		{LPAREN, "("},
-		{IDENT, "five"},
-		{COMMA, ","},
-		{IDENT, "ten"},
-		{RPAREN, ")"},
-		{SEMICOLON, ";"},
-		{EOF, ""},
-	}
-	l := NewLexer(input)
-	for i, tt := range tests {
-		tok := l.NextToken()
-		if tok.Type != tt.expectedType {
-			t.Fatalf("tests[%d] - ype wrong. expected=%q, got=%q",
-				i, tt.expectedType, tok.Type)
-		}
-		if tok.Literal != tt.expectedLiteral {
-			t.Fatalf("tests[%d] - literal wrong. expected=%q, got=%q",
-				i, tt.expectedLiteral, tok.Literal)
-		}
-	}
-}
-func TestNextTokenThree(t *testing.T) {
-	input := `!-/*5;
-    5 < 10 > 5;
-`
-	tests := []struct {
-		expectedType    TokenType
-		expectedLiteral string
-	}{
-		{BANG, "!"},
-		{MINUS, "-"},
-		{SLASH, "/"},
-		{ASTRISK, "*"},
-		{INT, "5"},
-		{SEMICOLON, ";"},
-		{INT, "5"},
-		{LT, "<"},
-		{INT, "10"},
-		{GT, ">"},
-		{INT, "5"},
-		{SEMICOLON, ";"},
-		{EOF, ""},
-	}
-	l := NewLexer(input)
-	for i, tt := range tests {
-		tok := l.NextToken()
-		if tok.Type != tt.expectedType {
-			t.Fatalf("tests[%d] - ype wrong. expected=%q, got=%q",
-				i, tt.expectedType, tok.Type)
-		}
-		if tok.Literal != tt.expectedLiteral {
-			t.Fatalf("tests[%d] - literal wrong. expected=%q, got=%q",
-				i, tt.expectedLiteral, tok.Literal)
-		}
-	}
-}
+// AST testing
 
-func TestNextTokenFour(t *testing.T) {
-	input := `if (5 < 10) {
-        return true;
-    } else {
-        return false;
-    }
-`
-	tests := []struct {
-		expectedType    TokenType
-		expectedLiteral string
-	}{
-		{IF, "if"},
-		{LPAREN, "("},
-		{INT, "5"},
-		{LT, "<"},
-		{INT, "10"},
-		{RPAREN, ")"},
-		{LBRACE, "{"},
-		{RETURN, "return"},
-		{TRUE, "true"},
-		{SEMICOLON, ";"},
-		{RBRACE, "}"},
-		{ELSE, "else"},
-		{LBRACE, "{"},
-		{RETURN, "return"},
-		{FALSE, "false"},
-		{SEMICOLON, ";"},
-		{RBRACE, "}"},
-		{EOF, ""},
-	}
-	l := NewLexer(input)
-	for i, tt := range tests {
-		tok := l.NextToken()
-		if tok.Type != tt.expectedType {
-			t.Fatalf("tests[%d] - ype wrong. expected=%q, got=%q",
-				i, tt.expectedType, tok.Type)
-		}
-		if tok.Literal != tt.expectedLiteral {
-			t.Fatalf("tests[%d] - literal wrong. expected=%q, got=%q",
-				i, tt.expectedLiteral, tok.Literal)
-		}
-	}
-}
-
-func TestNextTokenFive(t *testing.T) {
+func TestLetStatements(t *testing.T) {
 	input := `
-        10 == 10;
-        9 != 10;
-    `
-	tests := []struct {
-		expectedType    TokenType
-		expectedLiteral string
-	}{
-		{INT, "10"},
-		{EQ, "=="},
-		{INT, "10"},
-		{SEMICOLON, ";"},
-		{INT, "9"},
-		{NOT_EQ, "!="},
-		{INT, "10"},
-		{SEMICOLON, ";"},
-		{EOF, ""},
-	}
+let x = 5;
+let y = 10;
+let foobar = 838383;
+`
 	l := NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+	if program == nil {
+		t.Fatalf("ParseProgram() returned nil")
+	}
+	if len(program.Statements) != 3 {
+		t.Fatalf("program.Statements does not contain 3 statements. got=%d",
+			len(program.Statements))
+	}
+	tests := []struct {
+		expectedIdentifier string
+	}{
+		{"x"},
+		{"y"},
+		{"foobar"},
+	}
 	for i, tt := range tests {
-		tok := l.NextToken()
-		if tok.Type != tt.expectedType {
-			t.Fatalf("tests[%d] - ype wrong. expected=%q, got=%q",
-				i, tt.expectedType, tok.Type)
+		stmt := program.Statements[i]
+		if !testLetStatement(t, stmt, tt.expectedIdentifier) {
+			return
 		}
-		if tok.Literal != tt.expectedLiteral {
-			t.Fatalf("tests[%d] - literal wrong. expected=%q, got=%q",
-				i, tt.expectedLiteral, tok.Literal)
+	}
+}
+
+func testLetStatement(t *testing.T, s Statement, name string) bool {
+	if s.TokenLiteral() != "let" {
+		t.Errorf("s.TokenLiteral not 'let'. got=%q", s.TokenLiteral())
+		return false
+	}
+	letStmt, ok := s.(*LetStatement)
+	if !ok {
+		t.Errorf("s not *ast.LetStatement. got=%T", s)
+		return false
+	}
+	if letStmt.Name.Value != name {
+		t.Errorf("letStmt.Name.Value not '%s'. got=%s", name, letStmt.Name.Value)
+		return false
+	}
+	if letStmt.Name.TokenLiteral() != name {
+		t.Errorf("s.Name not '%s'. got=%s", name, letStmt.Name)
+		return false
+	}
+	return true
+}
+
+func checkParserErrors(t *testing.T, p *Parser) {
+	errors := p.Erros()
+	if len(errors) == 0 {
+		return
+	}
+	t.Errorf("parser has %d errors", len(errors))
+	for _, msg := range errors {
+		t.Errorf("parser error : %q", msg)
+	}
+	t.FailNow()
+}
+
+func TestReturnStatements(t *testing.T) {
+	input := `
+return 5;
+return 10;
+return 993322;
+`
+	l := NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+	if len(program.Statements) != 3 {
+		t.Fatalf("program.Statements does not contain 3 statements. got=%d",
+			len(program.Statements))
+	}
+	for _, stmt := range program.Statements {
+		returnStmt, ok := stmt.(*ReturnStatement)
+		if !ok {
+			t.Errorf("stmt not *ast.returnStatement. got=%T", stmt)
+			continue
 		}
+		if returnStmt.TokenLiteral() != "return" {
+			t.Errorf("returnStmt.TokenLiteral not 'return', got %q",
+				returnStmt.TokenLiteral())
+		}
+	}
+}
+
+func TestString(t *testing.T) {
+	program := &Program{
+		Statements: []Statement{
+			&LetStatement{
+				Token: Token{Type: LET, Literal: "let"},
+				Name: &Identifier{
+					Token: Token{Type: IDENT, Literal: "myVar"},
+					Value: "myVar",
+				},
+				Value: &Identifier{
+					Token: Token{Type: IDENT, Literal: "anotherVar"},
+					Value: "anotherVar",
+				},
+			},
+		},
+	}
+	if program.String() != "let myVar = anotherVar;" {
+		t.Errorf("program.String() wrong. got=%q", program.String())
+	}
+}
+
+func TestIdentifierExpression(t *testing.T) {
+	input := "foobar;"
+	l := NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+	if len(program.Statements) != 1 {
+		t.Fatalf("program has not enough statements. got=%d",
+			len(program.Statements))
+	}
+	stmt, ok := program.Statements[0].(*ExpressionStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T",
+			program.Statements[0])
+	}
+	ident, ok := stmt.Expression.(*Identifier)
+	if !ok {
+		t.Fatalf("exp not *ast.Identifier. got=%T", stmt.Expression)
+	}
+	if ident.Value != "foobar" {
+		t.Errorf("ident.Value not %s. got=%s", "foobar", ident.Value)
+	}
+	if ident.TokenLiteral() != "foobar" {
+		t.Errorf("ident.TokenLiteral not %s. got=%s", "foobar",
+			ident.TokenLiteral())
 	}
 }
